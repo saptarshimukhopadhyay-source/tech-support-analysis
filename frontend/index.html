@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ticket Analytics Report — February 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e14; --surface: #13161f; --surface2: #1a1e2a; --border: #252a3a;
+    --accent: #4f8bff; --accent2: #a78bfa; --accent3: #34d399; --accent4: #f59e0b;
+    --text: #e2e8f0; --muted: #64748b; --danger: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header { background: linear-gradient(135deg, #0f1629 0%, #1a1040 50%, #0c1220 100%); border-bottom: 1px solid var(--border); padding: 36px 48px 28px; position: relative; overflow: hidden; }
+  header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 300px; height: 300px; background: radial-gradient(circle, rgba(79,139,255,0.12) 0%, transparent 70%); border-radius: 50%; }
+  header::after { content: ''; position: absolute; bottom: -80px; left: 30%; width: 400px; height: 200px; background: radial-gradient(circle, rgba(167,139,250,0.08) 0%, transparent 70%); }
+  .header-tag { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 10px; opacity: 0.8; }
+  header h1 { font-size: 36px; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #a78bfa 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; margin-bottom: 8px; }
+  header p { color: var(--muted); font-size: 14px; }
+  .demo-badge { display: inline-flex; align-items: center; background: rgba(245,158,11,0.15); color: var(--accent4); border: 1px solid rgba(245,158,11,0.3); padding: 3px 10px; border-radius: 20px; font-size: 11px; font-family: 'DM Mono', monospace; margin-left: 12px; vertical-align: middle; gap: 5px; }
+
+  .kpi-strip { display: flex; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+  .kpi { flex: 1; background: var(--surface); padding: 20px 28px; transition: background 0.2s; }
+  .kpi:hover { background: var(--surface2); }
+  .kpi-label { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+  .kpi-value { font-size: 28px; font-weight: 800; line-height: 1; }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .kpi-value.blue { color: var(--accent); }
+  .kpi-value.purple { color: var(--accent2); }
+  .kpi-value.green { color: var(--accent3); }
+  .kpi-value.amber { color: var(--accent4); font-size: 18px; }
+
+  .tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; }
+  .tab { padding: 14px 24px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .panel { display: none; padding: 32px 40px; }
+  .panel.active { display: block; }
+
+  .section-title { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .overview-grid { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: start; }
+
+  .category-list { display: flex; flex-direction: column; gap: 6px; }
+  .cat-item { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color 0.2s; }
+  .cat-item:hover { border-color: rgba(79,139,255,0.4); }
+  .cat-header { display: flex; align-items: center; padding: 14px 18px; cursor: pointer; user-select: none; gap: 12px; }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .cat-name { flex: 1; font-size: 14px; font-weight: 700; }
+  .cat-count { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); cursor: pointer; padding: 2px 8px; border-radius: 5px; transition: background 0.15s; }
+  .cat-count:hover { background: rgba(79,139,255,0.15); color: var(--accent); }
+  .cat-pct { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); width: 48px; text-align: right; }
+  .cat-bar-wrap { flex: 0 0 100px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .cat-bar { height: 100%; border-radius: 2px; }
+  .cat-chevron { color: var(--muted); font-size: 10px; transition: transform 0.2s; flex-shrink: 0; }
+  .cat-item.open .cat-chevron { transform: rotate(180deg); }
+
+  .subcat-panel { display: none; border-top: 1px solid var(--border); background: var(--bg); }
+  .cat-item.open .subcat-panel { display: block; }
+  .subcat-row { display: flex; align-items: center; padding: 10px 18px 10px 38px; gap: 10px; border-bottom: 1px solid #1a1e2a; cursor: pointer; transition: background 0.15s; }
+  .subcat-row:last-child { border-bottom: none; }
+  .subcat-row:hover { background: var(--surface2); }
+  .subcat-name { flex: 1; font-size: 12px; font-family: 'DM Mono', monospace; display: flex; align-items: center; gap: 6px; }
+  .info-icon { width: 15px; height: 15px; border-radius: 50%; background: var(--border); color: var(--muted); font-size: 9px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-style: italic; font-family: Georgia, serif; cursor: help; transition: all 0.15s; }
+  .info-icon:hover { background: var(--accent); color: #fff; }
+  .subcat-count { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent3); font-weight: 500; }
+  .subcat-bar-wrap { flex: 0 0 80px; height: 3px; background: var(--surface2); border-radius: 2px; }
+  .subcat-bar { height: 100%; border-radius: 2px; }
+  .subcat-badge { font-size: 10px; background: rgba(79,139,255,0.15); color: var(--accent); padding: 2px 6px; border-radius: 4px; font-family: 'DM Mono', monospace; }
+  .top-badge { background: rgba(245,158,11,0.15) !important; color: var(--accent4) !important; }
+
+  .pie-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .pie-title { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 20px; }
+  #pie-svg { display: block; margin: 0 auto; }
+  .pie-legend { margin-top: 20px; display: flex; flex-direction: column; gap: 7px; max-height: 300px; overflow-y: auto; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; padding: 3px 6px; border-radius: 5px; transition: background 0.15s; }
+  .legend-item:hover { background: var(--surface2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .legend-name { flex: 1; }
+  .legend-count { font-family: 'DM Mono', monospace; color: var(--muted); font-size: 11px; }
+
+  .rankings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .rank-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .rank-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .rank-header-icon { font-size: 18px; }
+  .rank-header-title { font-size: 13px; font-weight: 700; }
+  .rank-row { display: flex; align-items: center; padding: 12px 20px; gap: 14px; border-bottom: 1px solid #1a1e2a; cursor: pointer; transition: background 0.15s; }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-row:hover { background: var(--surface2); }
+  .rank-num { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 700; color: var(--border); width: 28px; flex-shrink: 0; }
+  .rank-num.gold { color: var(--accent4); }
+  .rank-num.silver { color: #94a3b8; }
+  .rank-num.bronze { color: #b45309; }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 6px; }
+  .rank-parent { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .rank-count { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 700; color: var(--accent3); flex-shrink: 0; }
+  .rank-sparkbar { width: 60px; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+  .rank-sparkfill { height: 100%; border-radius: 2px; }
+
+  /* Meaning tooltip */
+  .meaning-tooltip { position: fixed; background: #1e2436; border: 1px solid var(--accent); padding: 12px 16px; border-radius: 10px; font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text); max-width: 320px; line-height: 1.6; pointer-events: none; z-index: 9999; display: none; box-shadow: 0 16px 40px rgba(0,0,0,0.7); }
+  .meaning-tooltip .tt-sub { font-weight: 700; color: var(--accent); margin-bottom: 3px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+  .meaning-tooltip .tt-cat { font-size: 10px; color: var(--muted); margin-bottom: 8px; }
+  .meaning-tooltip .tt-body { color: #cbd5e1; }
+
+  /* Pie tooltip */
+  .pie-tooltip { position: fixed; background: var(--surface); border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; font-size: 12px; pointer-events: none; display: none; z-index: 9998; box-shadow: 0 8px 24px rgba(0,0,0,0.5); white-space: nowrap; }
+
+  /* Modal */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 700px; max-width: 92vw; max-height: 82vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 80px rgba(0,0,0,0.6); }
+  .modal-header { padding: 22px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .modal-title { font-size: 17px; font-weight: 800; }
+  .modal-subtitle { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .modal-meaning { background: rgba(79,139,255,0.07); border: 1px solid rgba(79,139,255,0.2); border-radius: 8px; padding: 10px 14px; margin-top: 10px; font-size: 12px; color: #94a3b8; line-height: 1.6; font-family: 'DM Mono', monospace; }
+  .modal-close { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.15s; }
+  .modal-close:hover { color: var(--text); border-color: var(--accent); }
+  .modal-body { padding: 20px 28px; overflow-y: auto; flex: 1; }
+  .modal-search { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; outline: none; transition: border-color 0.2s; }
+  .modal-search:focus { border-color: var(--accent); }
+  .ticket-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .ticket-chip { font-family: 'DM Mono', monospace; font-size: 11px; background: var(--bg); border: 1px solid var(--border); color: var(--accent); padding: 7px 12px; border-radius: 6px; transition: all 0.15s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ticket-chip:hover { border-color: var(--accent); background: rgba(79,139,255,0.1); }
+  .modal-footer { padding: 14px 28px; border-top: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .no-result { text-align: center; padding: 40px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; }
+
+  /* Export buttons */
+  .export-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500;
+    color: var(--muted); background: transparent;
+    border: 1px solid var(--border); border-radius: 5px;
+    padding: 3px 8px; cursor: pointer; flex-shrink: 0;
+    transition: all 0.15s; white-space: nowrap; letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .export-btn:hover { color: var(--accent3); border-color: var(--accent3); background: rgba(52,211,153,0.08); }
+  .export-btn:active { transform: scale(0.96); }
+  .export-btn svg { width: 10px; height: 10px; flex-shrink: 0; }
+  .export-btn-sub {
+    font-size: 10px; color: var(--muted); background: transparent;
+    border: 1px solid transparent; border-radius: 4px;
+    padding: 2px 6px; cursor: pointer; flex-shrink: 0;
+    transition: all 0.15s; white-space: nowrap; font-family: 'DM Mono', monospace;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .export-btn-sub:hover { color: var(--accent3); border-color: var(--accent3); background: rgba(52,211,153,0.08); }
+  .modal-export-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 600;
+    color: var(--bg); background: var(--accent3);
+    border: none; border-radius: 7px;
+    padding: 7px 14px; cursor: pointer; flex-shrink: 0;
+    transition: all 0.15s; letter-spacing: 0.3px;
+  }
+  .modal-export-btn:hover { background: #22c55e; }
+  .modal-export-btn:active { transform: scale(0.97); }
+  .modal-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  /* Flash animation on export */
+  @keyframes exportFlash {
+    0% { background: rgba(52,211,153,0.3); }
+    100% { background: transparent; }
+  }
+  .export-flash { animation: exportFlash 0.4s ease-out; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* DATE BAR */
+  .date-bar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 14px; margin-top: 20px; position: relative; z-index: 1; }
+  .date-presets { display: flex; gap: 6px; flex-wrap: wrap; }
+  .preset-btn { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.05); border: 1px solid var(--border); padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+  .preset-btn:hover { color: var(--text); border-color: var(--accent); }
+  .preset-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(79,139,255,0.12); }
+  .date-inputs { display: flex; align-items: flex-end; gap: 10px; margin-left: auto; }
+  .date-field label { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; display: block; margin-bottom: 3px; }
+  .date-field input[type="date"] { background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; padding: 6px 10px; border-radius: 7px; outline: none; transition: border-color 0.15s; color-scheme: dark; }
+  .date-field input[type="date"]:focus { border-color: var(--accent); }
+  .date-sep { color: var(--muted); font-size: 16px; padding-bottom: 8px; }
+  .fetch-btn { display: flex; align-items: center; gap: 8px; padding: 8px 20px; background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); border: none; border-radius: 8px; color: #fff; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; white-space: nowrap; height: 36px; }
+  .fetch-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(79,139,255,0.4); }
+  .fetch-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .btn-spinner { width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; }
+  .status-bar { margin-top: 12px; font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; border-radius: 6px; display: inline-block; }
+  .status-bar.loading { background: rgba(79,139,255,0.1); color: var(--accent); border: 1px solid rgba(79,139,255,0.2); }
+  .status-bar.success { background: rgba(52,211,153,0.1); color: var(--accent3); border: 1px solid rgba(52,211,153,0.2); }
+  .status-bar.error { background: rgba(248,113,113,0.1); color: var(--danger); border: 1px solid rgba(248,113,113,0.2); }
+  .loading-overlay { position: fixed; inset: 0; background: rgba(12,14,20,0.85); z-index: 500; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 16px; backdrop-filter: blur(4px); }
+  .loading-overlay.active { display: flex; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .loading-spinner { width: 44px; height: 44px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .loading-text { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); animation: pulse 1.5s ease-in-out infinite; }
+  .empty-state { text-align: center; padding: 80px 40px; }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-title { font-size: 18px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+  .empty-sub { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--border); }
+  .error-state { background: rgba(248,113,113,0.07); border: 1px solid rgba(248,113,113,0.2); border-radius: 12px; padding: 32px; text-align: center; margin: 32px 40px; }
+  .error-title { font-size: 16px; font-weight: 700; color: var(--danger); margin-bottom: 8px; }
+  .error-msg { font-family: 'DM Mono', monospace; font-size: 12px; color: #f87171aa; line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-tag">Ticket Intelligence · PLOMNI</div>
+  <h1>Categorization Analytics</h1>
+  <p>AI-powered ticket classification &nbsp;·&nbsp; Hover <b style="color:var(--accent)">ⓘ</b> on any sub-category for its definition</p>
+
+  <!-- DATE PICKER BAR -->
+  <div class="date-bar">
+    <div class="date-presets">
+      <button class="preset-btn" onclick="applyPreset('this-month',this)">This month</button>
+      <button class="preset-btn active" onclick="applyPreset('last-month',this)">Last month</button>
+      <button class="preset-btn" onclick="applyPreset('last-7',this)">Last 7 days</button>
+      <button class="preset-btn" onclick="applyPreset('last-30',this)">Last 30 days</button>
+    </div>
+    <div class="date-inputs">
+      <div class="date-field">
+        <label>From</label>
+        <input type="date" id="date-from">
+      </div>
+      <div class="date-sep">→</div>
+      <div class="date-field">
+        <label>To</label>
+        <input type="date" id="date-to">
+      </div>
+      <button class="fetch-btn" id="fetch-btn" onclick="fetchData()">
+        <span id="fetch-btn-label">Load Data</span>
+        <span id="fetch-spinner" class="btn-spinner" style="display:none"></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div id="status-bar" style="display:none" class="status-bar">
+    <span id="status-msg"></span>
+  </div>
+</header>
+
+<div class="kpi-strip">
+  <div class="kpi"><div class="kpi-label">Total Tickets</div><div class="kpi-value blue" id="kpi-total">—</div><div class="kpi-sub" id="kpi-period">Select a date range</div></div>
+  <div class="kpi"><div class="kpi-label">Categories</div><div class="kpi-value purple" id="kpi-cats">—</div><div class="kpi-sub">Distinct classifications</div></div>
+  <div class="kpi"><div class="kpi-label">Sub-categories</div><div class="kpi-value green" id="kpi-subcats">—</div><div class="kpi-sub">Unique sub-types</div></div>
+  <div class="kpi"><div class="kpi-label">Top Category</div><div class="kpi-value amber" id="kpi-topcat">—</div><div class="kpi-sub" id="kpi-topcat-sub">—</div></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-overview" onclick="switchTab('overview')">📊 Category Overview</div>
+  <div class="tab" id="tab-rankings" onclick="switchTab('rankings')">🏆 Top Rankings</div>
+</div>
+
+<div class="panel active" id="panel-overview">
+  <div class="overview-grid">
+    <div>
+      <div class="section-title">Categories &amp; Sub-categories — click count to view tickets · hover ⓘ for definition</div>
+      <div class="category-list" id="cat-list"></div>
+    </div>
+    <div>
+      <div class="section-title">Distribution</div>
+      <div class="pie-wrap">
+        <div class="pie-title">Ticket Volume by Category</div>
+        <svg id="pie-svg" width="240" height="240" viewBox="0 0 240 240"></svg>
+        <div class="pie-legend" id="pie-legend"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="panel-rankings">
+  <div class="section-title">Top performers by volume — click any row to drill into ticket IDs</div>
+  <div class="rankings-grid">
+    <div class="rank-card">
+      <div class="rank-header"><span class="rank-header-icon">📁</span><span class="rank-header-title">Top Categories</span></div>
+      <div id="top-categories"></div>
+    </div>
+    <div class="rank-card">
+      <div class="rank-header"><span class="rank-header-icon">🏷️</span><span class="rank-header-title">Top Sub-categories</span></div>
+      <div id="top-subcategories"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal" id="modal-inner">
+    <div class="modal-header">
+      <div style="flex:1;min-width:0">
+        <div class="modal-title" id="modal-title">Tickets</div>
+        <div class="modal-subtitle" id="modal-subtitle">—</div>
+        <div class="modal-meaning" id="modal-meaning" style="display:none"></div>
+      </div>
+      <button class="modal-close" id="modal-close-btn">✕</button>
+    </div>
+    <div class="modal-body">
+      <input class="modal-search" type="text" placeholder="Search ticket IDs..." id="modal-search">
+      <div class="ticket-grid" id="ticket-grid"></div>
+    </div>
+    <div class="modal-footer">
+      <div class="modal-footer-row">
+        <span id="modal-footer-text" style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">—</span>
+        <button class="modal-export-btn" id="modal-export-btn">
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor"><path d="M8 1a1 1 0 0 1 1 1v6.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 1 1 1.414-1.414L7 8.586V2a1 1 0 0 1 1-1zM2 13a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1z"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text" id="loading-text">Fetching data...</div>
+</div>
+
+<div class="meaning-tooltip" id="meaning-tooltip">
+  <div class="tt-sub" id="tt-sub-name"></div>
+  <div class="tt-cat" id="tt-cat-name"></div>
+  <div class="tt-body" id="tt-body"></div>
+</div>
+<div class="pie-tooltip" id="pie-tooltip"></div>
+
+<script>
+(function() {
+"use strict";
+
+// ═══════════════════════════════════════════════════════
+// SUBCATEGORY DEFINITIONS
+// ═══════════════════════════════════════════════════════
+var DEFS = {
+  NACH: {
+    REQUIRE_DEBIT_MODE: "User is requesting for the Debit mode to setup the Nach",
+    UPDATE_BANK_NAME: "User requesting to update the bank name because there is a mismatch between Banking and Nach",
+    NACH_TASK_STUCK: "User is claiming the application is stuck during or after the Nach step. They can say they completed nach but the case is still open, or the Nach task is not opening.",
+    REQUIRE_ESIGN_LINK: "Sales will describe that they need an Esign link to setup NACH. Can also mention Nach link or aadhar esign.",
+    REQUIRE_PNACH: "Sales will request for a Pnach form to setup Nach",
+    SKIP_NACH: "User would request to Skip nach because application will have an existing mandate active",
+    AUTO_OPS: "User is requesting to move the case to Ops because nach setup/Mandate is now complete. Note: user must mention nach is completed or mandate id is generated.",
+    REQUIRE_UPI_LINK: "User would request UPI link to setup nach. Current existing emi is less than 14k which makes cx eligible for a UPI mandate link.",
+    NACH_DIGILOCKER: "User faced an issue at Digilocker while completing the NACH/VKYC step",
+    NACH_BANK_IFSC: "User is not able to complete Nach because IFSC is not supported",
+    UPDATE_ACCOUNT_TYPE: "User is requesting to update the account type from savings to current or vice versa",
+    RETRIGGER_NACH: "User is requesting to retrigger the NACH task",
+    NACH_LOS: "User is claiming that the nach task is completed but correct data is not reflected in LOS/Reports"
+  },
+  BANKING: {
+    RETRIGGER_BANKING: "User requesting to retrigger verify your income or retrigger banking. Can also come as: delete old banking document, remove perfios file. If removing perfios, it means retriggering banking — not that perfios wasn't fetched.",
+    UPDATE_BANK_NAME: "User is requesting to update the bank name in Financial or Penny tab to avoid a mismatch",
+    HUNTER: "User is requesting to move the case ahead from Hunter because the RCU have already cleared the case from their queue",
+    BANKING_OFFER: "User claims banking task is completed but a new offer is not generating. If banking is not mentioned while claiming offer not generated, tag under CIBIL_DOWN.",
+    STUCK_AT_PENNY: "User is claiming they are unable to perform Penny testing task due to an error, or the case is not moving after Penny testing",
+    REVIVE_AND_RETRIGGER_BANKING: "User requesting to revive the application and retrigger banking. User might also mention: redo income task / verify your income.",
+    UPDATE_ACCOUNT_NUMBER: "User requesting to update the account number in financial or Penny tab because it was captured wrongly",
+    RETRIGGER_PENNY_TESTING: "User requesting to retrigger the Penny testing task",
+    UPDATE_IFSC_CODE: "User requesting to update IFSC code because there is a mismatch between financial and penny tab",
+    BANKING_UPLOAD_ERROR: "User facing an issue with uploading the bank statement",
+    REVIVE_TO_RCU: "User is requesting to revive the case and send it back to RCU",
+    REVIVE_AND_SKIP_BOUNCE: "User requesting to revive application and skip the Bounce parameter. Can also mention: override banking.",
+    UPDATE_ACCOUNT_HOLDER_NAME: "User is requesting to update the account holder name in the financial tab",
+    BANKING_TASK_STUCK: "User is claiming that the application is not moving during one of the banking steps. Can mention: uploaded banking but case not moving, or banking task not showing next steps.",
+    OCR: "User is claiming that the case is stuck at OCR stage",
+    BANKING_RESUBMISSION: "User is claiming that the application is stuck at Banking Resubmission Flow Eligibility",
+    CREDIT_INCOME_VERIFICATION: "User is requesting to send the case to Credit manager income verification task",
+    ERROR_BANKING_MODE: "User is claiming they have encountered Error banking mode. They will specifically mention the phrase 'Error banking mode' along with banking task stuck."
+  },
+  BUREAU: {
+    CIBIL_DOWN: "User has mentioned offer can't be generated / unable to generate an offer. Also covers: cibil couldn't be fetched, bureau is down, cibil not attached in LOS, requesting tech support to retry offer generation.",
+    CIBIL_REJECT_QUERY: "User is requesting for the reject reason due to Cibil",
+    CIBIL_ARCHIVE_REQUEST: "User is requesting to archive the application because new cam score needs to be calculated or old offer is now expired",
+    CIBIL_REVIVE_REQUEST: "User is requesting to revive the application because some discrepancy with the Cibil",
+    RERUN_CAM: "User is requesting to rerun the CAM and update Cibil",
+    CIBIL_LOS: "User is unable to fetch the cibil file due to dependency at LMS. Mostly seen on cases with ticket IDs containing PLCS.",
+    CIBIL_FINAL_POLICY_CALL: "User is facing an error at Refresh Cibil and make the final policy call step",
+    EMI_MISMATCH: "User is claiming that the System captured EMI is different than the Cibil file captured EMI and requesting to update existing EMI",
+    UPDATE_OBLIGATION: "User is claiming we have captured the wrong obligation amount therefore requesting to update the existing obligation"
+  },
+  CUSTOMER_DETAILS: {
+    OBLIGATE_EXISTING_EMI: "User is requesting to obligate existing EMI to rerun CAM",
+    SKIP_ADDRESS_QUALITY_CHECK: "User is requesting to skip the address quality check",
+    RETRIGGER_LOCATE_YOUR_HOME: "User is requesting to retrigger the Locate Your Home task",
+    PINNING_TASK_STUCK: "User is claiming that the task got stuck after completing the Locate Your Home task",
+    REVIVE_AND_RETRIGGER_PINNING: "User is requesting to revive the application and retrigger the pinning task to update pincode or address. Can also mention IGL/OGL. User often refers to pinning as 'locate your home'.",
+    UPDATE_PINCODE: "User is requesting to update the Pincode without retriggering the pinning/locate your home task",
+    REVIVE_UPDATE_PINCODE: "User is requesting to revive the application and update the pincode (without retriggering the pinning task)",
+    PINNING_ERROR: "User is encountering an error while performing the Locate Your Home task",
+    REJECT_REASON: "User requesting for reject reason due to a customer detail",
+    COMPANY_NAME: "User is requesting to update the name of the company",
+    UPDATE_SALARY: "User is requesting to update the salary of the cx because it wasn't captured properly",
+    SALARY_CPA: "User is requesting to move the case to CPA for manual salary correction. Can mention salary as income. CPA hasn't captured correct salary and manual correction is needed.",
+    UPDATE_DOB: "User is requesting to update the DOB due to mismatch in documents or customer entered it incorrectly",
+    REVIVE_DOB: "User is requesting to revive the application along with updating the Date of Birth",
+    WORK_EMAIL: "User is requesting to retrigger the work mail task so cx can re-verify the work mail ID",
+    MARITAL_STATUS: "User is requesting to update the Marital status of the customer",
+    UPDATE_FATHER_NAME: "User is requesting to update the Father's name",
+    DATA_LOS: "User is claiming that customer details (name, age, etc.) are not reflecting in LOS/Reports portal",
+    UPDATE_MOBILE_NUMBER: "User is requesting to update the mobile number of the customer"
+  },
+  BASIC_DETAILS: {
+    ARCHIVAL: "User is requesting to archive an application without providing much context",
+    UPDATE_EXISTING_EMI: "User is requesting to update the eligible loan amount. The eligible loan amount is determined by the existing EMI which was captured wrongly.",
+    RESIDENCE_TYPE: "User is requesting to update the residency type from owned to rented or vice versa",
+    EMPLOYMENT_TYPE: "User is requesting to update the employment type from Salaried to SENP or vice versa. SENP = Self Employed.",
+    CUSTOMER_NAME_LOS: "User is requesting to change the name of customer in LOS. If they don't explicitly mention penny/financial tab, group here (not under UPDATE_ACCOUNT_HOLDER_NAME).",
+    GENDER_CHANGE: "User is requesting to change the gender of the applicant",
+    UPDATE_ADDRESS: "User is requesting to update the address of the applicant because the wrong address was captured initially"
+  },
+  VERIFICATIONS: {
+    REVIVE_EMPLOYMENT_TYPE: "User is requesting to revive the application to update the employment type",
+    OFFICE_FI: "User is requesting to retrigger the Office FI task because the cx entered wrong office address",
+    OHP_CPA: "User is requesting to assign the case to OHP CPA for offer upgrade verified using electricity bill/e-bill",
+    EMPLOYMENT_REVIEW: "User is requesting to move the case to the credit manager so that employment verification can be done again",
+    RETRIGGER_EMPLOYMENT: "User is requesting to retrigger the employment task",
+    EMPLOYMENT_TASK_STUCK: "User is claiming that they are unable to perform the employment task",
+    REFERENCE_TASK_STUCK: "User is claiming they are unable to perform the reference task, or case isn't allocated, or completed Reference task but case not moved",
+    RETRIGGER_REFERENCE: "User is requesting to retrigger the reference verification task",
+    REFERENCE_CALL: "User is claiming that the reference call isn't connecting",
+    NEW_DEVICE: "User is requesting to retrigger all tasks because cx has a new device and facing an IMEI mismatch error",
+    REVIEW_FI: "User is requesting to move the case to credit manager for the Review FI task",
+    DOCUMENT_UPLOAD: "User is claiming that they are unable to upload a document",
+    RETRIGGER_OHP: "User is requesting to retrigger the Ebill upload option or retrigger the OHP task. Can also mention: send case back to Credit manager after OHP submission.",
+    OHP_TASK_STUCK: "User is claiming they are unable to upgrade loan amount via Electricity bill, or unable to upload Electricity bill, or case not moving after applying Electricity bill. Can use term 'ebill'. May also say 'Mandatory OHP task is not showing up'.",
+    SKIP_GST: "User is requesting to expire the GST task because the hard pull has already happened",
+    SELF_FI_TASK_STUCK: "User is claiming that the task got stuck while doing the SELF FI task or task not moving ahead after completing it",
+    RETRIGGER_SELF_FI: "User is requesting to retrigger the Self FI task",
+    VERIFY_YOUR_RESIDENCY: "User is requesting to retrigger the Verify Your Residency task",
+    CREDIT_INCOME_VERIFICATION: "User is requesting to send the case to Credit manager income verification task"
+  },
+  KYC: {
+    REQUIRE_VKYC_LINK: "User is facing some issue with the KYC task and requesting for a VKYC link",
+    RETRIGGER_OKYC: "User is requesting to retrigger the OKYC task",
+    KYC_TASK_STUCK: "User is claiming the task is stuck — VKYC is completed or yet to be initiated. Can request to trigger the KYC step as other steps are completed, or move the case from KYC. Can also mention 'stuck at Auditor callback'.",
+    DIGILOCKER: "User is facing a problem at Digilocker's end while performing steps",
+    KYC_TASK_APP: "User is claiming that the customer is facing a problem in the mobile app while performing KYC steps",
+    KYC_LOS: "User is complaining that they are not able to view KYC details in LOS after VKYC is completed",
+    AGENT: "User has raised a concern with the Agent responsible for holding the VKYC call",
+    REVIVE_KYC: "User is requesting to revive the application after the case was rejected at the KYC task (can be due to non-linkage of PAN and Aadhaar)"
+  },
+  OFFER: {
+    DOWNGRADE_OHP: "User is requesting to downgrade the OHP offer",
+    OHP_UPGRADE: "User is claiming that cx has applied for OHP after uploading ebill but loan amount hasn't increased",
+    CHOOSE_YOUR_TENURE: "User is claiming that choose your tenure task is not triggered",
+    REVIEW_LOAN_DETAILS: "User is claiming that the review loan details task is not triggered",
+    RETRIGGER_FLOATING_OFFER: "User is requesting to retrigger the floating offer task so they can modify the loan amount",
+    FLOATING_OFFER_MUTUAL: "User is claiming that the task is stuck at the floating offer mutual expire task",
+    RETRIGGER_COMMERCIAL_RENEG: "User is requesting to retrigger the commercial renegotiation task used for waiver",
+    OFFER_TASK_STUCK: "User is claiming the task got stuck after accepting the offer or after completing choose your tenure/loan task",
+    L2_OFFER: "User is claiming they are unable to generate the L2 offer. Must explicitly mention L2 offer — if just saying offer not generating, tag under CIBIL_DOWN."
+  },
+  PUSH_TO_LMS: {
+    LAN_NOT_GENERATED: "User is claiming that the application can't be pushed to LMS because LAN is not generated yet",
+    LMS_TASK_STUCK: "User is claiming that the application is not moving to LMS even though all tasks are completed",
+    FINAL_POLICY_CALL: "User is claiming that case got stuck at Push to LMS task due to final policy call"
+  },
+  APPLICATION_CREATION: {
+    DEDUPE: "User is claiming they are unable to create a new application (Login error), unable to login, getting failed offer status, or requesting application IDs linked to a mobile number or PAN ID.",
+    DEDUPE_ARCHIVAL: "User is requesting to archive the application with a stated reason to relogin (PAN/mobile linkage) or unable to login. Unlike ARCHIVAL in BASIC_DETAILS, a reason is stated here.",
+    CANCELLING_APPLICATION: "User has raised a request to either cancel or reject an existing application",
+    UPDATE_PAN: "User is requesting to update the PAN number linked to an application",
+    PAN_VERIFICATION: "User is requesting to retrigger the PAN verification task",
+    LOAN_AMOUNT: "User is claiming that the loan amount is not showing up correctly in the floating offer"
+  },
+  INSURANCE: {
+    DATA_LOS: "The insurance tab is showing wrong data or no data at all for the opted insurance (HDFC or Manipal)",
+    INSURANCE_TASK_STUCK: "User is claiming they are unable to perform the insurance or Protect Your Loan task. May also say Protect Your Loan task is not showing up.",
+    INSURANCE_LOAN_MISMATCH: "User is claiming that after applying the insurance amount they are seeing a mismatch on the final loan amount",
+    RETRIGGER_PROTECT_YOUR_LOAN: "User is requesting to retrigger the protect your loan or insurance task. If user says task is stuck AND requests to trigger it, tag under INSURANCE_TASK_STUCK instead.",
+    MANIPAL: "User is claiming that they are facing issue on Manipal's end while generating insurance",
+    HDFC: "User is claiming that they are facing issue on HDFC's end while generating insurance"
+  },
+  TECHNICAL: {
+    FAST_TAG_CX: "User is claiming that the task got stuck at the fast tag cx node",
+    MOBILE_APP_ERROR: "User is claiming that they are facing a problem within the Mobile app",
+    TRACKWIZZ: "User is claiming that task is stuck because of Trackwizz",
+    SELFIE_ERROR: "User is claiming that they are unable to take a selfie",
+    RISK_RATING: "User is claiming that the task is stuck at Risk rating",
+    POLICY_ERROR: "User is claiming that there is some error while running the policy",
+    OTP: "User is unable to receive OTP",
+    DISBURSAL_STUCK: "User is claiming that all tasks were done but still the case is not getting pushed for disbursal",
+    VERIFICATIONS_RETRIGGERED: "User is claiming that the task is stuck at verifications retriggered tech error. Must mention keywords 'verifications retriggered'.",
+    INCORRECT_TASK_ALLOCATION: "User is claiming that an application is wrongly allocated certain tasks or was revived improperly, causing already-completed tasks to be re-allocated"
+  },
+  GENERAL: {
+    TASK_STUCK: "User is claiming that the task is stuck without much context. Terms like: 'move this case', 'still open', 'stuck in system', 'stuck in LOS', 'case got stuck', 'next step not coming', 'tech error'.",
+    OPS_TASK_STUCK: "User is claiming that the case is allocated to Ops and not moving, or case got wrongly allocated to Ops. Opposite of Auto_OPS — here the case moved to Ops incorrectly.",
+    REVIVE_NO_ACTIVITY: "User is requesting to revive the application because the application was rejected due to no activity",
+    ASSIGN_CPA: "User is requesting to allocate/assign the case to CPA",
+    ASSIGN_CREDIT: "User is requesting to assign a credit manager for the case, not specifically mentioning for which task",
+    AUTO_OPS: "User is requesting to move the case to Ops without providing much context on why. Unlike NACH-Auto OPS where the user mentions nach is active or mandate id is generated.",
+    REVIVE: "User is requesting to revive an application without much context provided",
+    RETRIGGER: "User is requesting to retrigger a task but haven't provided much context on which task",
+    UPDATE_ROI: "User is requesting to update the existing Interest Rate of the application",
+    REJECT_REASON: "User is requesting for the reject reason of an application"
+  },
+  AGREEMENT: {
+    LOAN_AGREEMENT: "User is claiming that the loan agreement is not getting generated despite completing all the necessary tasks",
+    RETRIGGER_LOAN_AGREEMENT: "User is requesting to retrigger the loan agreement task"
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+// CONFIGURATION — point this to your deployed backend URL
+// ═══════════════════════════════════════════════════════
+var API_BASE = (function() {
+  // If running locally (file:// or localhost), use localhost backend
+  var h = window.location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1' || h === '') {
+    return 'http://localhost:5000';
+  }
+  // Otherwise read from a global set by your deployment config,
+  // or fall back to the same origin (works when frontend + backend are on the same host)
+  return window.ANALYTICS_API_URL || '';
+})();
+
+// ═══════════════════════════════════════════════════════
+// DATE HELPERS
+// ═══════════════════════════════════════════════════════
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmtDate(d) { return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+
+// Init dates to last month
+(function initDates() {
+  var now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  document.getElementById('date-from').value = fmtDate(new Date(y, m-1, 1));
+  document.getElementById('date-to').value   = fmtDate(new Date(y, m, 0));
+})();
+
+window.applyPreset = function(p, el) {
+  document.querySelectorAll('.preset-btn').forEach(function(b) { b.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  var now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  var from, to;
+  if (p === 'this-month')  { from = new Date(y, m, 1);   to = new Date(y, m+1, 0); }
+  if (p === 'last-month')  { from = new Date(y, m-1, 1); to = new Date(y, m, 0); }
+  if (p === 'last-7')      { to = new Date(); from = new Date(); from.setDate(from.getDate()-6); }
+  if (p === 'last-30')     { to = new Date(); from = new Date(); from.setDate(from.getDate()-29); }
+  document.getElementById('date-from').value = fmtDate(from);
+  document.getElementById('date-to').value   = fmtDate(to);
+};
+
+// ═══════════════════════════════════════════════════════
+// DATA STATE
+// ═══════════════════════════════════════════════════════
+var RAW_DATA    = [];
+var catMap      = {};
+var catEntries  = [];
+var totalTickets = 0;
+
+// ═══════════════════════════════════════════════════════
+// COLOR PALETTE
+// ═══════════════════════════════════════════════════════
+var PALETTE = ['#4f8bff','#a78bfa','#34d399','#f59e0b','#f87171','#60a5fa','#c084fc','#4ade80','#fbbf24','#fb923c','#38bdf8','#e879f9','#2dd4bf','#facc15','#f472b6','#818cf8'];
+
+function getColor(catName) {
+  for (var ci = 0; ci < catEntries.length; ci++) {
+    if (catEntries[ci][0] === catName) return PALETTE[ci % PALETTE.length];
+  }
+  return '#888';
+}
+
+// ═══════════════════════════════════════════════════════
+// FETCH + RENDER ORCHESTRATION
+// ═══════════════════════════════════════════════════════
+window.fetchData = function() {
+  var dateFrom = document.getElementById('date-from').value;
+  var dateTo   = document.getElementById('date-to').value;
+
+  if (!dateFrom || !dateTo) {
+    showStatus('Please select both From and To dates.', 'error'); return;
+  }
+  if (dateFrom > dateTo) {
+    showStatus('From date must be before To date.', 'error'); return;
+  }
+  if (!API_BASE) {
+    showStatus('API_BASE is not configured. Set window.ANALYTICS_API_URL before the script.', 'error'); return;
+  }
+
+  showLoading('Fetching tickets ' + dateFrom + ' → ' + dateTo + ' …');
+
+  var url = API_BASE + '/api/tickets?from=' + encodeURIComponent(dateFrom) + '&to=' + encodeURIComponent(dateTo);
+
+  fetch(url)
+    .then(function(res) {
+      if (!res.ok) return res.json().then(function(e) { throw new Error(e.error || 'HTTP ' + res.status); });
+      return res.json();
+    })
+    .then(function(data) {
+      hideLoading();
+      if (!data.tickets || data.tickets.length === 0) {
+        showStatus('No tickets found for ' + dateFrom + ' → ' + dateTo, 'error');
+        renderEmpty();
+        return;
+      }
+      buildFromAPI(data);
+      showStatus('✓ Loaded ' + data.total + ' tickets · ' + dateFrom + ' → ' + dateTo + (data.parse_errors ? ' · ' + data.parse_errors + ' parse errors' : ''), 'success');
+    })
+    .catch(function(err) {
+      hideLoading();
+      showStatus('Error: ' + err.message, 'error');
+      renderError(err.message);
+    });
+};
+
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg || 'Loading…';
+  document.getElementById('loading-overlay').classList.add('active');
+  document.getElementById('fetch-btn').disabled = true;
+  document.getElementById('fetch-btn-label').textContent = 'Loading…';
+  document.getElementById('fetch-spinner').style.display = 'inline-block';
+}
+
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('active');
+  document.getElementById('fetch-btn').disabled = false;
+  document.getElementById('fetch-btn-label').textContent = 'Load Data';
+  document.getElementById('fetch-spinner').style.display = 'none';
+}
+
+function showStatus(msg, type) {
+  var bar = document.getElementById('status-bar');
+  bar.textContent = msg;
+  bar.className = 'status-bar ' + (type || 'loading');
+  bar.style.display = 'inline-block';
+}
+
+function renderEmpty() {
+  var html = '<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-title">No data found</div><div class="empty-sub">Try a different date range</div></div>';
+  document.getElementById('cat-list').innerHTML = html;
+  document.getElementById('pie-svg').innerHTML = '';
+  document.getElementById('pie-legend').innerHTML = '';
+  document.getElementById('top-categories').innerHTML = '';
+  document.getElementById('top-subcategories').innerHTML = '';
+  resetKPIs();
+}
+
+function renderError(msg) {
+  var html = '<div class="error-state"><div class="error-icon">⚠️</div><div class="error-title">Could not load data</div><div class="error-msg">' + msg + '<br><br>Make sure the backend API is running and accessible.</div></div>';
+  document.getElementById('cat-list').innerHTML = html;
+  document.getElementById('pie-svg').innerHTML = '';
+  document.getElementById('pie-legend').innerHTML = '';
+  document.getElementById('top-categories').innerHTML = '';
+  document.getElementById('top-subcategories').innerHTML = '';
+  resetKPIs();
+}
+
+function resetKPIs() {
+  ['kpi-total','kpi-cats','kpi-subcats','kpi-topcat'].forEach(function(id) {
+    document.getElementById(id).textContent = '—';
+  });
+  document.getElementById('kpi-topcat-sub').textContent = '—';
+  document.getElementById('kpi-period').textContent = 'Select a date range';
+}
+
+function buildFromAPI(data) {
+  // Transform API response into the same RAW_DATA shape the renderer expects
+  RAW_DATA = data.tickets.map(function(t) {
+    return { id: t.id, category: t.category || 'UNKNOWN', subcategory: t.subcategory || 'UNKNOWN' };
+  });
+
+  // Rebuild catMap
+  catMap = {};
+  for (var ri = 0; ri < RAW_DATA.length; ri++) {
+    var r = RAW_DATA[ri];
+    if (!catMap[r.category]) catMap[r.category] = { total: 0, subcats: {} };
+    catMap[r.category].total++;
+    if (!catMap[r.category].subcats[r.subcategory]) catMap[r.category].subcats[r.subcategory] = [];
+    catMap[r.category].subcats[r.subcategory].push(r.id);
+  }
+
+  catEntries = Object.keys(catMap).map(function(k) { return [k, catMap[k]]; });
+  catEntries.sort(function(a, b) { return b[1].total - a[1].total; });
+  totalTickets = RAW_DATA.length;
+
+  var allSubcatSet = {};
+  for (var si2 = 0; si2 < RAW_DATA.length; si2++) allSubcatSet[RAW_DATA[si2].subcategory] = 1;
+  var numSubcats = Object.keys(allSubcatSet).length;
+
+  // KPIs
+  document.getElementById('kpi-total').textContent = totalTickets;
+  document.getElementById('kpi-period').textContent = data.from + ' → ' + data.to;
+  document.getElementById('kpi-cats').textContent = catEntries.length;
+  document.getElementById('kpi-subcats').textContent = numSubcats;
+  var topE = catEntries[0];
+  document.getElementById('kpi-topcat').textContent = topE[0];
+  var topSubE = Object.keys(topE[1].subcats).map(function(k) { return [k, topE[1].subcats[k].length]; }).sort(function(a, b) { return b[1] - a[1]; });
+  document.getElementById('kpi-topcat-sub').textContent = topE[1].total + ' tickets · Top: ' + topSubE[0][0];
+
+  // Re-render all visuals
+  buildAccordion();
+  buildPie();
+  buildRankings();
+}
+
+function getColor(catName) {
+  for (var ci = 0; ci < catEntries.length; ci++) {
+    if (catEntries[ci][0] === catName) return PALETTE[ci % PALETTE.length];
+  }
+  return '#888';
+}
+
+// ═══════════════════════════════════════════════════════
+// MEANING TOOLTIP
+// ═══════════════════════════════════════════════════════
+var ttEl = document.getElementById('meaning-tooltip');
+
+function positionTT(e) {
+  var x = e.clientX + 16, y = e.clientY - 10;
+  if (x + 340 > window.innerWidth) x = e.clientX - 344;
+  if (y + 140 > window.innerHeight) y = e.clientY - 140;
+  ttEl.style.left = x + 'px';
+  ttEl.style.top = y + 'px';
+}
+
+function showMeaning(e, cat, sub) {
+  e.stopPropagation();
+  var def = (DEFS[cat] && DEFS[cat][sub]) ? DEFS[cat][sub] : 'No definition available.';
+  document.getElementById('tt-sub-name').textContent = sub;
+  document.getElementById('tt-cat-name').textContent = '↳ ' + cat;
+  document.getElementById('tt-body').textContent = def;
+  ttEl.style.display = 'block';
+  positionTT(e);
+}
+
+function hideMeaning() { ttEl.style.display = 'none'; }
+
+document.addEventListener('mousemove', function(e) {
+  if (ttEl.style.display === 'block') positionTT(e);
+});
+
+// ═══════════════════════════════════════════════════════
+// BUILD ACCORDION
+// ═══════════════════════════════════════════════════════
+function buildAccordion() {
+var catList = document.getElementById('cat-list');
+catList.innerHTML = '';
+
+for (var ci2 = 0; ci2 < catEntries.length; ci2++) {
+  (function(cat, data, color) {
+    var pct = ((data.total / totalTickets) * 100).toFixed(1);
+    var subcatsSorted = Object.keys(data.subcats).map(function(k) { return [k, data.subcats[k]]; });
+    subcatsSorted.sort(function(a, b) { return b[1].length - a[1].length; });
+    var maxSub = subcatsSorted[0][1].length;
+
+    var item = document.createElement('div');
+    item.className = 'cat-item';
+
+    var header = document.createElement('div');
+    header.className = 'cat-header';
+    header.innerHTML =
+      '<div class="cat-dot" style="background:' + color + '"></div>' +
+      '<div class="cat-name">' + cat + '</div>' +
+      '<div class="cat-bar-wrap"><div class="cat-bar" style="background:' + color + ';width:' + pct + '%"></div></div>' +
+      '<div class="cat-count" title="Click to view all tickets in this category">' + data.total + '</div>' +
+      '<div class="cat-pct">' + pct + '%</div>' +
+      '<button class="export-btn cat-export-btn" title="Export category CSV">'+
+        '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a1 1 0 0 1 1 1v6.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 1 1 1.414-1.414L7 8.586V2a1 1 0 0 1 1-1zM2 13a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1z"/></svg>'+
+        'Export</button>' +
+      '<div class="cat-chevron">▼</div>';
+
+    header.addEventListener('click', function(e) {
+      if (e.target.classList.contains('cat-count') || e.target.closest('.cat-export-btn')) return;
+      item.classList.toggle('open');
+    });
+    header.querySelector('.cat-count').addEventListener('click', function(e) {
+      e.stopPropagation();
+      var ids = RAW_DATA.filter(function(rx) { return rx.category === cat; }).map(function(rx) { return rx.id; });
+      openModal(cat, 'Category', ids, null, null);
+    });
+    header.querySelector('.cat-export-btn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      exportCategoryCSV(cat, data);
+      flashEl(this);
+    });
+
+    var subPanel = document.createElement('div');
+    subPanel.className = 'subcat-panel';
+
+    for (var sci = 0; sci < subcatsSorted.length; sci++) {
+      (function(sub, ids, sci2) {
+        var subPct = ((ids.length / data.total) * 100).toFixed(0);
+        var hasDef = !!(DEFS[cat] && DEFS[cat][sub]);
+
+        var subRow = document.createElement('div');
+        subRow.className = 'subcat-row';
+        subRow.innerHTML =
+          '<div class="subcat-name">' +
+            sub +
+            (hasDef ? '<span class="info-icon">i</span>' : '') +
+          '</div>' +
+          '<div class="subcat-bar-wrap"><div class="subcat-bar" style="background:' + color + ';width:' + Math.round(ids.length / maxSub * 100) + '%"></div></div>' +
+          '<div class="subcat-count">' + ids.length + '</div>' +
+          (sci2 === 0
+            ? '<span class="subcat-badge top-badge">TOP</span>'
+            : '<span class="subcat-badge">' + subPct + '%</span>') +
+          '<button class="export-btn-sub sub-export-btn" title="Export sub-category CSV">'+
+            '<svg viewBox="0 0 16 16" width="9" height="9" fill="currentColor"><path d="M8 1a1 1 0 0 1 1 1v6.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 1 1 1.414-1.414L7 8.586V2a1 1 0 0 1 1-1zM2 13a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1z"/></svg>'+
+            'CSV</button>';
+
+        subRow.addEventListener('click', function(e) {
+          if (e.target.closest('.sub-export-btn') || e.target.closest('.info-icon')) return;
+          openModal(cat + ' → ' + sub, 'Sub-category', ids, cat, sub);
+        });
+
+        subRow.querySelector('.sub-export-btn').addEventListener('click', function(e) {
+          e.stopPropagation();
+          exportSubcategoryCSV(sub, ids);
+          flashEl(this);
+        });
+
+        if (hasDef) {
+          var icon = subRow.querySelector('.info-icon');
+          icon.addEventListener('mouseenter', function(e) { showMeaning(e, cat, sub); });
+          icon.addEventListener('mouseleave', hideMeaning);
+          icon.addEventListener('click', function(e) { e.stopPropagation(); });
+        }
+
+        subPanel.appendChild(subRow);
+      })(subcatsSorted[sci][0], subcatsSorted[sci][1], sci);
+    }
+
+    item.appendChild(header);
+    item.appendChild(subPanel);
+    catList.appendChild(item);
+  })(catEntries[ci2][0], catEntries[ci2][1], PALETTE[ci2 % PALETTE.length]);
+}
+} // end buildAccordion
+
+// ═══════════════════════════════════════════════════════
+// PIE CHART
+// ═══════════════════════════════════════════════════════
+function buildPie() {
+  var svg = document.getElementById('pie-svg');
+  var legend = document.getElementById('pie-legend');
+  svg.innerHTML = ''; legend.innerHTML = '';
+  var cx = 120, cy = 120, r = 100, ir = 55;
+  var startAngle = -Math.PI / 2;
+  var visSlices = catEntries.slice(0, 12);
+  var otherTotal = 0;
+  for (var vi = 12; vi < catEntries.length; vi++) otherTotal += catEntries[vi][1].total;
+  if (otherTotal > 0) visSlices = visSlices.concat([['OTHER', { total: otherTotal }]]);
+
+  var paths = '';
+  for (var pi = 0; pi < visSlices.length; pi++) {
+    var catName = visSlices[pi][0];
+    var cnt = visSlices[pi][1].total;
+    var angle = (cnt / totalTickets) * 2 * Math.PI;
+    var endAngle = startAngle + angle;
+    var x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle);
+    var x2 = cx + r * Math.cos(endAngle), y2 = cy + r * Math.sin(endAngle);
+    var ix1 = cx + ir * Math.cos(startAngle), iy1 = cy + ir * Math.sin(startAngle);
+    var ix2 = cx + ir * Math.cos(endAngle), iy2 = cy + ir * Math.sin(endAngle);
+    var large = angle > Math.PI ? 1 : 0;
+    var col = PALETTE[pi % PALETTE.length];
+    paths += '<path d="M' + ix1.toFixed(2) + ',' + iy1.toFixed(2) + ' L' + x1.toFixed(2) + ',' + y1.toFixed(2) +
+      ' A' + r + ',' + r + ' 0 ' + large + ',1 ' + x2.toFixed(2) + ',' + y2.toFixed(2) +
+      ' L' + ix2.toFixed(2) + ',' + iy2.toFixed(2) +
+      ' A' + ir + ',' + ir + ' 0 ' + large + ',0 ' + ix1.toFixed(2) + ',' + iy1.toFixed(2) + ' Z"' +
+      ' fill="' + col + '" opacity="0.9" data-cat="' + catName + '" style="cursor:pointer;transition:opacity 0.2s"/>';
+    startAngle = endAngle;
+  }
+
+  svg.innerHTML = paths +
+    '<circle cx="' + cx + '" cy="' + cy + '" r="' + ir + '" fill="#0c0e14"/>' +
+    '<text x="' + cx + '" y="' + (cy - 6) + '" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="DM Mono">TOTAL</text>' +
+    '<text x="' + cx + '" y="' + (cy + 13) + '" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="bold" font-family="Syne">' + totalTickets + '</text>';
+
+  var pieTT = document.getElementById('pie-tooltip');
+  var paths2 = svg.querySelectorAll('path');
+  for (var pj = 0; pj < paths2.length; pj++) {
+    (function(path2) {
+      var pCat = path2.getAttribute('data-cat');
+      var pCnt = catMap[pCat] ? catMap[pCat].total : otherTotal;
+      path2.addEventListener('mouseenter', function(e) {
+        pieTT.innerHTML = '<strong>' + pCat + '</strong><br>' + pCnt + ' tickets · ' + ((pCnt / totalTickets) * 100).toFixed(1) + '%';
+        pieTT.style.display = 'block';
+        path2.style.opacity = '1';
+      });
+      path2.addEventListener('mousemove', function(e) {
+        pieTT.style.left = (e.clientX + 12) + 'px';
+        pieTT.style.top = (e.clientY - 20) + 'px';
+      });
+      path2.addEventListener('mouseleave', function() {
+        pieTT.style.display = 'none';
+        path2.style.opacity = '0.9';
+      });
+      path2.addEventListener('click', function() {
+        if (pCat === 'OTHER') return;
+        var ids2 = RAW_DATA.filter(function(rx) { return rx.category === pCat; }).map(function(rx) { return rx.id; });
+        openModal(pCat, 'Category', ids2, null, null);
+      });
+    })(paths2[pj]);
+  }
+
+  var legend = document.getElementById('pie-legend');
+  for (var li2 = 0; li2 < visSlices.length; li2++) {
+    (function(lCat, lCnt, lColor) {
+      var li3 = document.createElement('div');
+      li3.className = 'legend-item';
+      li3.innerHTML = '<div class="legend-dot" style="background:' + lColor + '"></div><span class="legend-name">' + lCat + '</span><span class="legend-count">' + lCnt + '</span>';
+      li3.addEventListener('click', function() {
+        if (lCat === 'OTHER') return;
+        var ids3 = RAW_DATA.filter(function(rx) { return rx.category === lCat; }).map(function(rx) { return rx.id; });
+        openModal(lCat, 'Category', ids3, null, null);
+      });
+      legend.appendChild(li3);
+    })(visSlices[li2][0], visSlices[li2][1].total, PALETTE[li2 % PALETTE.length]);
+  }
+} // end buildPie
+
+// ═══════════════════════════════════════════════════════
+// TOP RANKINGS
+// ═══════════════════════════════════════════════════════
+function buildRankings() {
+  var topCats = catEntries.slice(0, 10);
+  if (!topCats.length) return;
+  var maxCatCnt = topCats[0][1].total;
+  var tcDiv = document.getElementById('top-categories');
+  tcDiv.innerHTML = '';
+
+  for (var rci = 0; rci < topCats.length; rci++) {
+    (function(rCat, rData, rIdx) {
+      var rColor = getColor(rCat);
+      var numCls = rIdx === 0 ? 'gold' : rIdx === 1 ? 'silver' : rIdx === 2 ? 'bronze' : '';
+      var row = document.createElement('div');
+      row.className = 'rank-row';
+      row.innerHTML =
+        '<div class="rank-num ' + numCls + '">' + String(rIdx + 1).padStart(2, '0') + '</div>' +
+        '<div class="rank-info"><div class="rank-name">' + rCat + '</div></div>' +
+        '<div class="rank-sparkbar"><div class="rank-sparkfill" style="background:' + rColor + ';width:' + Math.round(rData.total / maxCatCnt * 100) + '%"></div></div>' +
+        '<div class="rank-count">' + rData.total + '</div>' +
+        '<button class="export-btn rank-export-btn" title="Export category CSV">'+
+          '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a1 1 0 0 1 1 1v6.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 1 1 1.414-1.414L7 8.586V2a1 1 0 0 1 1-1zM2 13a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1z"/></svg>'+
+          'Export</button>';
+      row.querySelector('.rank-export-btn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        exportCategoryCSV(rCat, rData);
+        flashEl(this);
+      });
+      row.addEventListener('click', function(e) {
+        if (e.target.closest('.rank-export-btn')) return;
+        var ids4 = RAW_DATA.filter(function(rx) { return rx.category === rCat; }).map(function(rx) { return rx.id; });
+        openModal(rCat, 'Category', ids4, null, null);
+      });
+      tcDiv.appendChild(row);
+    })(topCats[rci][0], topCats[rci][1], rci);
+  }
+
+  // Sub-categories aggregation
+  var subMap = {};
+  for (var smi = 0; smi < RAW_DATA.length; smi++) {
+    var sr = RAW_DATA[smi];
+    var sKey = sr.category + '||' + sr.subcategory;
+    if (!subMap[sKey]) subMap[sKey] = { count: 0, subcat: sr.subcategory, cat: sr.category, ids: [] };
+    subMap[sKey].count++;
+    subMap[sKey].ids.push(sr.id);
+  }
+  var topSubs = Object.keys(subMap).map(function(k) { return subMap[k]; });
+  topSubs.sort(function(a, b) { return b.count - a.count; });
+  topSubs = topSubs.slice(0, 10);
+  var maxSubCnt = topSubs[0].count;
+  var tsDiv = document.getElementById('top-subcategories');
+  tsDiv.innerHTML = '';
+
+  for (var tsi = 0; tsi < topSubs.length; tsi++) {
+    (function(s, tIdx) {
+      var sColor = getColor(s.cat);
+      var numCls = tIdx === 0 ? 'gold' : tIdx === 1 ? 'silver' : tIdx === 2 ? 'bronze' : '';
+      var hasDef = !!(DEFS[s.cat] && DEFS[s.cat][s.subcat]);
+      var row = document.createElement('div');
+      row.className = 'rank-row';
+      row.innerHTML =
+        '<div class="rank-num ' + numCls + '">' + String(tIdx + 1).padStart(2, '0') + '</div>' +
+        '<div class="rank-info">' +
+          '<div class="rank-name">' + s.subcat + (hasDef ? ' <span class="info-icon">i</span>' : '') + '</div>' +
+          '<div class="rank-parent">' + s.cat + '</div>' +
+        '</div>' +
+        '<div class="rank-sparkbar"><div class="rank-sparkfill" style="background:' + sColor + ';width:' + Math.round(s.count / maxSubCnt * 100) + '%"></div></div>' +
+        '<div class="rank-count">' + s.count + '</div>' +
+        '<button class="export-btn rank-export-btn" title="Export sub-category CSV">'+
+          '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a1 1 0 0 1 1 1v6.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 1 1 1.414-1.414L7 8.586V2a1 1 0 0 1 1-1zM2 13a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H3a1 1 0 0 1-1-1z"/></svg>'+
+          'Export</button>';
+      if (hasDef) {
+        var icon = row.querySelector('.info-icon');
+        icon.addEventListener('mouseenter', function(e) { showMeaning(e, s.cat, s.subcat); });
+        icon.addEventListener('mouseleave', hideMeaning);
+        icon.addEventListener('click', function(e) { e.stopPropagation(); });
+      }
+      row.querySelector('.rank-export-btn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        exportSubcategoryCSV(s.subcat, s.ids);
+        flashEl(this);
+      });
+      row.addEventListener('click', function(e) {
+        if (e.target.closest('.rank-export-btn') || e.target.closest('.info-icon')) return;
+        openModal(s.cat + ' → ' + s.subcat, 'Sub-category', s.ids, s.cat, s.subcat);
+      });
+      tsDiv.appendChild(row);
+    })(topSubs[tsi], tsi);
+  }
+} // end buildRankings
+
+// ═══════════════════════════════════════════════════════
+// CSV EXPORT HELPERS
+// ═══════════════════════════════════════════════════════
+
+function csvEscape(v) {
+  v = String(v);
+  if (v.indexOf(',') !== -1 || v.indexOf('"') !== -1 || v.indexOf('\n') !== -1) {
+    return '"' + v.replace(/"/g, '""') + '"';
+  }
+  return v;
+}
+
+function downloadCSV(filename, content) {
+  var blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(url); }, 500);
+}
+
+// Category CSV: category, subcategory, ticket_id
+function exportCategoryCSV(cat, data) {
+  var rows = ['category,subcategory,ticket_id'];
+  var subcats = Object.keys(data.subcats);
+  for (var si = 0; si < subcats.length; si++) {
+    var sub = subcats[si];
+    var ids = data.subcats[sub];
+    for (var ii = 0; ii < ids.length; ii++) {
+      rows.push(csvEscape(cat) + ',' + csvEscape(sub) + ',' + csvEscape(ids[ii]));
+    }
+  }
+  downloadCSV('tickets_' + cat.toLowerCase() + '.csv', rows.join('\r\n'));
+}
+
+// Sub-category CSV: subcategory, ticket_id
+function exportSubcategoryCSV(sub, ids) {
+  var rows = ['subcategory,ticket_id'];
+  for (var ii = 0; ii < ids.length; ii++) {
+    rows.push(csvEscape(sub) + ',' + csvEscape(ids[ii]));
+  }
+  downloadCSV('tickets_' + sub.toLowerCase() + '.csv', rows.join('\r\n'));
+}
+
+function flashEl(el) {
+  el.classList.remove('export-flash');
+  void el.offsetWidth; // reflow
+  el.classList.add('export-flash');
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════
+var currentTickets = [];
+var modalExportCtx = { type: null, cat: null, sub: null, data: null };
+
+function openModal(title, type, ids, cat, sub) {
+  currentTickets = [];
+  var seen = {};
+  for (var mi = 0; mi < ids.length; mi++) {
+    if (!seen[ids[mi]]) { seen[ids[mi]] = 1; currentTickets.push(ids[mi]); }
+  }
+  currentTickets.sort();
+
+  // Store export context
+  modalExportCtx.type = type; // 'Category' or 'Sub-category'
+  modalExportCtx.cat = cat;
+  modalExportCtx.sub = sub;
+
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-subtitle').textContent = type + ' · ' + currentTickets.length + ' unique tickets';
+  document.getElementById('modal-search').value = '';
+
+  var meaningEl = document.getElementById('modal-meaning');
+  if (sub && cat && DEFS[cat] && DEFS[cat][sub]) {
+    meaningEl.textContent = '📖 ' + DEFS[cat][sub];
+    meaningEl.style.display = 'block';
+  } else {
+    meaningEl.style.display = 'none';
+  }
+
+  renderTickets(currentTickets);
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function renderTickets(ids) {
+  var grid = document.getElementById('ticket-grid');
+  document.getElementById('modal-footer-text').textContent = 'Showing ' + ids.length + ' ticket' + (ids.length !== 1 ? 's' : '');
+  if (ids.length === 0) {
+    grid.innerHTML = '<div class="no-result">No tickets match your search</div>';
+    return;
+  }
+  var html = '';
+  for (var ti = 0; ti < ids.length; ti++) {
+    html += '<div class="ticket-chip" title="' + ids[ti] + '">' + ids[ti] + '</div>';
+  }
+  grid.innerHTML = html;
+}
+
+function filterTickets(q) {
+  if (!q) { renderTickets(currentTickets); return; }
+  var ql = q.toLowerCase();
+  var filtered = currentTickets.filter(function(id) { return id.toLowerCase().indexOf(ql) !== -1; });
+  renderTickets(filtered);
+}
+
+function closeModal() {
+  document.getElementById('modal-backdrop').classList.remove('open');
+}
+
+// Modal export button handler
+document.getElementById('modal-export-btn').addEventListener('click', function() {
+  var ctx = modalExportCtx;
+  if (ctx.type === 'Sub-category' && ctx.sub) {
+    exportSubcategoryCSV(ctx.sub, currentTickets);
+  } else if (ctx.type === 'Category' && ctx.cat) {
+    // Re-build data for category export from catMap
+    exportCategoryCSV(ctx.cat, catMap[ctx.cat]);
+  } else {
+    // Fallback: export whatever tickets are showing
+    var rows = ['ticket_id'];
+    for (var i = 0; i < currentTickets.length; i++) rows.push(csvEscape(currentTickets[i]));
+    downloadCSV('tickets_export.csv', rows.join('\r\n'));
+  }
+  flashEl(this);
+});
+
+document.getElementById('modal-search').addEventListener('input', function() { filterTickets(this.value); });
+document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+document.getElementById('modal-backdrop').addEventListener('click', function(e) {
+  if (e.target === document.getElementById('modal-backdrop')) closeModal();
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+// ═══════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+window.switchTab = function(name) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  var tabEl = document.getElementById('tab-' + name);
+  var panelEl = document.getElementById('panel-' + name);
+  if (tabEl) tabEl.classList.add('active');
+  if (panelEl) panelEl.classList.add('active');
+};
+
+})(); // end IIFE
+</script>
+</body>
+</html>
