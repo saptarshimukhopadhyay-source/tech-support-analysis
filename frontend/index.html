@@ -507,17 +507,18 @@ var DEFS = {
 };
 
 // ═══════════════════════════════════════════════════════
-// CONFIGURATION — point this to your deployed backend URL
+// CONFIGURATION — Railway backend URL
+// After deploying to Railway, replace the URL below with
+// your actual Railway URL e.g. https://your-app.railway.app
 // ═══════════════════════════════════════════════════════
 var API_BASE = (function() {
-  // If running locally (file:// or localhost), use localhost backend
   var h = window.location.hostname;
+  // Local development
   if (h === 'localhost' || h === '127.0.0.1' || h === '') {
-    return 'http://localhost:5000';
+    return 'http://localhost:8000';
   }
-  // Otherwise read from a global set by your deployment config,
-  // or fall back to the same origin (works when frontend + backend are on the same host)
-  return window.ANALYTICS_API_URL || '';
+  // ▼ REPLACE THIS with your Railway URL once deployed ▼
+  return 'https://YOUR-APP-NAME.railway.app';
 })();
 
 // ═══════════════════════════════════════════════════════
